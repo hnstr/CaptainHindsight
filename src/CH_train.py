@@ -1,46 +1,89 @@
 import json
 import numpy as np
 
-from CH_model import get_LSTM_model
+# from CH_model import get_LSTM_model
+
 
 def open_data_file(filename):
-	path = '../../Data/'
+    path = '../../Data/'
 
-	image_features = np.load(path + filename + '.npy')
-	with open(path + filename + '.json') as f:
-		image_captions = json.load(f)
+    image_features = np.load(path + filename + '.npy')
+    with open(path + filename + '.json') as f:
+        image_captions = json.load(f)
 
-	return image_features, image_captions
+    return image_features, image_captions
+
 
 def get_word_int_mappings(image_captions):
-	word_types = set()
-	i = 0
-	for image_caption_pair in image_captions:
-		for caption in image_caption_pair[1]:
-			for token in caption:
-				# TODO: Do we normalize?
-				word_types.add(token)
+    word_types = set()
 
-	sorted_word_types = sorted(list(word_types))
-	word2int = dict((c, i) for i, c in enumerate(sorted_word_types))
-	int2word = dict((i, c) for i, c in enumerate(sorted_word_types))
+    for image_caption_pair in image_captions:
+        for caption in image_caption_pair[1]:
+            for token in caption:
+                # TODO: Do we normalize?
+                word_types.add(token)
 
-	return word2int, int2word
+    sorted_word_types = sorted(list(word_types))
+    word2int = dict((c, i) for i, c in enumerate(sorted_word_types))
+    int2word = dict((i, c) for i, c in enumerate(sorted_word_types))
+
+    return word2int, int2word
+
 
 # TODO: Get data pairs:
 # x = [I, S0, ..., SN-1]
 # t = [S0, ...,, SN]
 # Write to file to save time next run
+# data pairs are output as follows:
+    # x = [image feature vector, S0, ... SN] where each row represents 1 caption
+    # t = [ S0, ..., SN] where each row represents 1 caption
 def get_data_pairs(filename):
-	pass
+
+    image_features, image_captions = open_data_file(filename)
+    word2int, int2word = get_word_int_mappings(image_captions)
+
+
+    pad_length = 60
+    x = np.zeros((len(image_features), 4096 + pad_length))
+    t = np.zeros((len(image_features), pad_length))
+
+    for counter in range(len(image_features)):
+
+        feature = image_features[counter, :]
+
+        # Iterate over 4 possible captions, convert them to int and place in IO arrays
+        for i in range(1, 5):
+            caption = image_captions[counter][1][i]
+            x_vec = np.zeros(pad_length)  # initialize empty word vector
+            t_vec = np.zeros(pad_length)
+
+            word_count = 0
+            for word in caption:
+                word_int = word2int[word]
+                x_vec[word_count] = word_int
+                t_vec[word_count] = word_int
+                word_count += 1
+
+            x_ = np.hstack((feature, x_vec))
+
+            x[counter, :] = x_
+            t[counter, :] = t_vec
+
+
+    return x, t
+
+
+x, t = get_data_pairs('merged_train')
+
 
 # TODO: Train model
 # Use ModelCheckpoint to write weight to file after every epocg
 def train(model, x, y):
-	pass
+    pass
+
 
 if __name__ == '__main__':
-	image_features, image_captions = open_data_file('merged_val')
-	word2int, int2word = get_word_int_mappings(image_captions)
+    image_features, image_captions = open_data_file('merged_val')
+    word2int, int2word = get_word_int_mappings(image_captions)
 
-	model = get_LSTM_model(4096, 26)
+    model = get_LSTM_model(4096, 26)
