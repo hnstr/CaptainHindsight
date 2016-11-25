@@ -1,8 +1,7 @@
 import json
 import numpy as np
 
-# from CH_model import get_LSTM_model
-
+from CH_model import get_LSTM_model
 
 def open_data_file(filename):
     path = '../../Data/'
@@ -12,7 +11,6 @@ def open_data_file(filename):
         image_captions = json.load(f)
 
     return image_features, image_captions
-
 
 def get_word_int_mappings(image_captions):
     word_types = set()
@@ -29,22 +27,10 @@ def get_word_int_mappings(image_captions):
 
     return word2int, int2word
 
-
-# TODO: Get data pairs:
-# x = [I, S0, ..., SN-1]
-# t = [S0, ...,, SN]
-# Write to file to save time next run
-# data pairs are output as follows:
-    # x = [image feature vector, S0, ... SN] where each row represents 1 caption
-    # t = [ S0, ..., SN] where each row represents 1 caption
-def get_data_pairs(filename):
-
-    image_features, image_captions = open_data_file(filename)
-    word2int, int2word = get_word_int_mappings(image_captions)
-
-
+def get_data_pairs(image_features, image_captions, word2int):
+    # TODO: make pad_lenght equal to max caption length
     pad_length = 60
-    x = np.zeros((len(image_features), 4096 + pad_length))
+    x = np.zeros((len(image_features), len(image_features[0]) + pad_length))
     t = np.zeros((len(image_features), pad_length))
 
     for counter in range(len(image_features)):
@@ -65,25 +51,34 @@ def get_data_pairs(filename):
                 word_count += 1
 
             x_ = np.hstack((feature, x_vec))
+            # TODO: is this necessary?
+            x_ = x_ / float(len(word2int))
 
             x[counter, :] = x_
             t[counter, :] = t_vec
 
+            y = np_utils.to_categorical(t)
 
-    return x, t
+    return x, y
 
-
-x, t = get_data_pairs('merged_train')
-
-
-# TODO: Train model
-# Use ModelCheckpoint to write weight to file after every epocg
 def train(model, x, y):
-    pass
+	# define the checkpoint
+	filepath="weights-improvement-{epoch:02d}-{loss:.4f}.hdf5"
+	checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
+	callbacks_list = [checkpoint]
+
+	# TODO: Add batchsize
+	model.fit(X, y, nb_epoch=1, callbacks=callbacks_list)
 
 
 if __name__ == '__main__':
+	# Retrieve image features and captions from files
     image_features, image_captions = open_data_file('merged_val')
+    # Get word-int mappings
     word2int, int2word = get_word_int_mappings(image_captions)
-
-    model = get_LSTM_model(4096, 26)
+    # Convert to approriate input-output pairs
+    x, y = get_data_pairs(image_features, image_captions, word2int)
+    # Build model
+    model = get_LSTM_model(len(image_features[0]), len(word2int))
+    # Train the model
+    train(model, x, y)
