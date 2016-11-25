@@ -1,7 +1,11 @@
 import json
 import numpy as np
+from keras.utils import np_utils
+from keras.callbacks import ModelCheckpoint
 
 from CH_model import get_LSTM_model
+
+training_mode = 0
 
 def open_data_file(filename):
     path = '../../Data/'
@@ -33,18 +37,19 @@ def get_word_int_mappings(image_captions):
 def get_data_pairs(image_features, image_captions, word2int):
     # TODO: make pad_lenght equal to max caption length
     pad_length = 60
-    x = np.zeros((len(image_features), len(image_features[0]) + pad_length))
-    t = np.zeros((len(image_features), pad_length))
+    x_img = []
+    x_lang = np.zeros((len(image_features), pad_length))
+    t = np.zeros((len(image_features), pad_length), dtype=int)
 
     for counter in range(len(image_features)):
-
         feature = image_features[counter, :]
+        x_img.append(feature)
 
         # Iterate over 4 possible captions, convert them to int and place in IO arrays
         for i in range(1, 5):
             caption = image_captions[counter][1][i]
-            x_vec = np.zeros(pad_length)  # initialize empty word vector
-            t_vec = np.zeros(pad_length)
+            x_vec = np.zeros(pad_length, dtype=int)  # initialize empty word vector
+            t_vec = np.zeros(pad_length, dtype=int)
 
             word_count = 0
 
@@ -61,29 +66,34 @@ def get_data_pairs(image_features, image_captions, word2int):
 
             # Add end of sentence markers
             x_vec[word_count+1] = word2int['</s>']
-            t_vec[word_count+1] = word2int['</s>']
-                
+            t_vec[word_count+1] = word2int['</s>'] 
 
-            x_ = np.hstack((feature, x_vec))
+            # x_ = np.hstack((feature, x_vec))
             # TODO: is this necessary?
-            x_ = x_ / float(len(word2int))
-
-            x[counter, :] = x_
+            x_ = x_vec / float(len(word2int))
+            x_lang[counter, :] = x_
             t[counter, :] = t_vec
 
-            y = np_utils.to_categorical(t)
+    x_img = np.array(x_img)
+    y = np_utils.to_categorical(t)
 
-    return x, y
+    return x_img, x_lang, y
 
-def train(model, x, y):
-	# define the checkpoint
-	filepath="weights-improvement-{epoch:02d}-{loss:.4f}.hdf5"
-	checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
-	callbacks_list = [checkpoint]
+def train(model, x_img, x_lang, y):
+    if training_mode:
+    	# define the checkpoint
+    	filepath="weights-improvement-{epoch:02d}-{loss:.4f}.hdf5"
+    	checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
+    	callbacks_list = [checkpoint]
 
-	# TODO: Add batchsize
-	model.fit(X, y, nb_epoch=1, callbacks=callbacks_list)
+    	# TODO: Add batchsize
+    	model.fit([x_img, x_lang], y, nb_epoch=1, callbacks=callbacks_list)
 
+    else:
+        # load the network weights
+        filename = "weights-improvement-00-74.3198.hdf5"
+        model.load_weights(filename)
+        model.compile(loss='categorical_crossentropy', optimizer='adam')
 
 if __name__ == '__main__':
 	# Retrieve image features and captions from files
@@ -91,8 +101,8 @@ if __name__ == '__main__':
     # Get word-int mappings
     word2int, int2word = get_word_int_mappings(image_captions)
     # Convert to approriate input-output pairs
-    x, y = get_data_pairs(image_features, image_captions, word2int)
+    x_img, x_lang, y = get_data_pairs(image_features, image_captions, word2int)
     # Build model
     model = get_LSTM_model(len(image_features[0]), len(word2int))
     # Train the model
-    train(model, x, y)
+    train(model, x_img, x_lang, y)

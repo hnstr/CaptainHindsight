@@ -43,7 +43,7 @@ def get_LSTM_model(img_input_dim, vocabulary_size):
 	model.add(Dense(vocabulary_size))
 	model.add(Activation('softmax'))
 
-	print(model.summary())
+	# print(model.summary())
 
 	# TODO: How to choose optimizer
 	# TODO: Should we use metric=['accuracy']? and why?
