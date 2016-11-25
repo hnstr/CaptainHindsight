@@ -23,6 +23,9 @@ def get_word_int_mappings(image_captions):
                 # TODO: Do we normalize?
                 word_types.add(token)
 
+    word_types.add('<s>')
+    word_types.add('</s>')
+
     sorted_word_types = sorted(list(word_types))
     word2int = dict((c, i) for i, c in enumerate(sorted_word_types))
     int2word = dict((i, c) for i, c in enumerate(sorted_word_types))
@@ -58,11 +61,22 @@ def get_data_pairs(filename):
             t_vec = np.zeros(pad_length)
 
             word_count = 0
+
+            # Add begin of sentence markers
+            x_vec[word_count] = word2int['<s>']
+            t_vec[word_count] = word2int['<s>']
+
+            # Process sentence
             for word in caption:
+            	word_count += 1
                 word_int = word2int[word]
                 x_vec[word_count] = word_int
                 t_vec[word_count] = word_int
-                word_count += 1
+
+            # Add end of sentence markers
+            x_vec[word_count+1] = word2int['</s>']
+            t_vec[word_count+1] = word2int['</s>']
+                
 
             x_ = np.hstack((feature, x_vec))
 
