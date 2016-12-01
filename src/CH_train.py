@@ -4,6 +4,7 @@ from keras.utils import np_utils
 from keras.callbacks import ModelCheckpoint
 
 from CH_model import get_LSTM_model
+import CH_predict
 
 training_mode = 0
 
@@ -66,7 +67,7 @@ def get_data_pairs(image_features, image_captions, word2int):
 
             # Add end of sentence markers
             x_vec[word_count+1] = word2int['</s>']
-            t_vec[word_count+1] = word2int['</s>'] 
+            t_vec[word_count+1] = word2int['</s>']
 
             # x_ = np.hstack((feature, x_vec))
             # TODO: is this necessary?
@@ -97,7 +98,7 @@ def train(model, x_img, x_lang, y):
 
 if __name__ == '__main__':
 	# Retrieve image features and captions from files
-    image_features, image_captions = open_data_file('merged_val')
+    image_features, image_captions = open_data_file('merged_train')
     # Get word-int mappings
     word2int, int2word = get_word_int_mappings(image_captions)
     # Convert to approriate input-output pairs
@@ -106,3 +107,7 @@ if __name__ == '__main__':
     model = get_LSTM_model(len(image_features[0]), len(word2int))
     # Train the model
     train(model, x_img, x_lang, y)
+
+    # Predict new outputs
+    image_features_val, image_captions_val = open_data_file('merged_val')
+    predictions = predict_caption(model, image_features_val):
