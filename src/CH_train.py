@@ -6,7 +6,9 @@ from keras.callbacks import ModelCheckpoint
 from CH_model import get_LSTM_model
 import CH_predict
 
-training_mode = 0
+training_mode = 1
+filename_weights_to_import = 'weights/?.hdf5'
+n_epochs = 1
 
 def open_data_file(filename):
     path = '../../Data/'
@@ -83,17 +85,16 @@ def get_data_pairs(image_features, image_captions, word2int):
 def train(model, x_img, x_lang, y):
     if training_mode:
     	# define the checkpoint
-    	filepath="weights-improvement-{epoch:02d}-{loss:.4f}.hdf5"
+    	filepath="weights/weights-improvement-{epoch:02d}-{loss:.4f}.hdf5"
     	checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
     	callbacks_list = [checkpoint]
 
     	# TODO: Add batchsize
-    	model.fit([x_img, x_lang], y, nb_epoch=1, callbacks=callbacks_list)
+    	model.fit([x_img, x_lang], y, nb_epoch=n_epochs, batch_size=32, callbacks=callbacks_list)
 
     else:
         # load the network weights
-        filename = "weights-improvement-00-74.3198.hdf5"
-        model.load_weights(filename)
+        model.load_weights(filename_weights_to_import)
         model.compile(loss='categorical_crossentropy', optimizer='adam')
 
 if __name__ == '__main__':
@@ -109,5 +110,5 @@ if __name__ == '__main__':
     train(model, x_img, x_lang, y)
 
     # Predict new outputs
-    image_features_val, image_captions_val = open_data_file('merged_val')
-    predictions = predict_caption(model, image_features_val):
+    # image_features_val, image_captions_val = open_data_file('merged_val')
+    # predictions = predict_caption(model, image_features_val)
