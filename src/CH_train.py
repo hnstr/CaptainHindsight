@@ -1,14 +1,20 @@
 import json
 import numpy as np
+import os.path
+import gc
 from keras.utils import np_utils
 from keras.callbacks import ModelCheckpoint
+from keras.preprocessing.sequence import pad_sequences
 
 from CH_model import get_LSTM_model
+from CH_mappings import get_word_int_mappings
 import CH_predict
 
 training_mode = 1
 filename_weights_to_import = 'weights/?.hdf5'
-n_epochs = 1
+n_epochs = 100
+filename_to_train_on = 'merged_train'
+n_files_trainingset_is_splitted_in = 716
 
 def open_data_file(filename):
     path = '../../Data/'
@@ -19,66 +25,27 @@ def open_data_file(filename):
 
     return image_features, image_captions
 
-def get_word_int_mappings(image_captions):
-    word_types = set()
+def get_data_pairs(filename, word2int):
+    image_features, image_captions = open_data_file(filename)
 
-    for image_caption_pair in image_captions:
-        for caption in image_caption_pair[1]:
-            for token in caption:
-                # TODO: Do we normalize?
-                word_types.add(token)
+    x_img, x_lang, t = [], [], []
 
-    word_types.add('<s>')
-    word_types.add('</s>')
+    for image_counter in range(len(image_features)):
+        for caption_counter in range(5):
+            caption = image_captions[image_counter][1][caption_counter]
+            full_caption = ['<s>'] + caption + ['</s>']
 
-    sorted_word_types = sorted(list(word_types))
-    word2int = dict((c, i) for i, c in enumerate(sorted_word_types))
-    int2word = dict((i, c) for i, c in enumerate(sorted_word_types))
+            for word_counter in range(1,len(full_caption)):
+                cap_to_int = [word2int[word] for word in full_caption[:word_counter+1]]
 
-    return word2int, int2word
+                x_img.append(image_features[image_counter])
+                x_lang.append(np.array(cap_to_int[:-1]) / float(len(word2int)))
+                t.append(cap_to_int[-1])
 
-def get_data_pairs(image_features, image_captions, word2int):
-    # TODO: make pad_lenght equal to max caption length
-    pad_length = 60
-    x_img = []
-    x_lang = np.zeros((len(image_features), pad_length))
-    t = np.zeros((len(image_features), pad_length), dtype=int)
-
-    for counter in range(len(image_features)):
-        feature = image_features[counter, :]
-        x_img.append(feature)
-
-        # Iterate over 4 possible captions, convert them to int and place in IO arrays
-        for i in range(1, 5):
-            caption = image_captions[counter][1][i]
-            x_vec = np.zeros(pad_length, dtype=int)  # initialize empty word vector
-            t_vec = np.zeros(pad_length, dtype=int)
-
-            word_count = 0
-
-            # Add begin of sentence markers
-            x_vec[word_count] = word2int['<s>']
-            t_vec[word_count] = word2int['<s>']
-
-            # Process sentence
-            for word in caption:
-            	word_count += 1
-                word_int = word2int[word]
-                x_vec[word_count] = word_int
-                t_vec[word_count] = word_int
-
-            # Add end of sentence markers
-            x_vec[word_count+1] = word2int['</s>']
-            t_vec[word_count+1] = word2int['</s>']
-
-            # x_ = np.hstack((feature, x_vec))
-            # TODO: is this necessary?
-            x_ = x_vec / float(len(word2int))
-            x_lang[counter, :] = x_
-            t[counter, :] = t_vec
 
     x_img = np.array(x_img)
-    y = np_utils.to_categorical(t)
+    x_lang = pad_sequences(x_lang)
+    y = np_utils.to_categorical(t, len(word2int))
 
     return x_img, x_lang, y
 
@@ -89,8 +56,7 @@ def train(model, x_img, x_lang, y):
     	checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
     	callbacks_list = [checkpoint]
 
-    	# TODO: Add batchsize
-    	model.fit([x_img, x_lang], y, nb_epoch=n_epochs, batch_size=32, callbacks=callbacks_list)
+    	model.fit([x_img, x_lang], y, nb_epoch=1, batch_size=32, callbacks=callbacks_list)
 
     else:
         # load the network weights
@@ -98,16 +64,29 @@ def train(model, x_img, x_lang, y):
         model.compile(loss='categorical_crossentropy', optimizer='adam')
 
 if __name__ == '__main__':
-	# Retrieve image features and captions from files
-    image_features, image_captions = open_data_file('merged_train')
     # Get word-int mappings
-    word2int, int2word = get_word_int_mappings(image_captions)
-    # Convert to approriate input-output pairs
-    x_img, x_lang, y = get_data_pairs(image_features, image_captions, word2int)
+    word2int, int2word = get_word_int_mappings(filename_to_train_on)
+
     # Build model
-    model = get_LSTM_model(len(image_features[0]), len(word2int))
-    # Train the model
-    train(model, x_img, x_lang, y)
+    model = get_LSTM_model(4096, len(word2int))
+
+    if not os.path.isfile('../../Data/' + filename_to_train_on + str(n_files_trainingset_is_splitted_in - 1) + '.npy') or \
+           os.path.isfile('../../Data/' + filename_to_train_on + str(n_files_trainingset_is_splitted_in) + '.npy'):
+        print "Something went wrong!!"
+
+    for epoch in range(n_epochs):
+        for n in np.random.permutation(n_files_trainingset_is_splitted_in):
+            gc.collect()
+
+            full_filename_to_train_on = filename_to_train_on
+            if n_files_trainingset_is_splitted_in > 1:
+                full_filename_to_train_on += str(n)
+
+            # Convert to approriate input-output pairs
+            x_img, x_lang, y = get_data_pairs(full_filename_to_train_on, word2int)
+
+            # Train the model
+            train(model, x_img, x_lang, y)
 
     # Predict new outputs
     # image_features_val, image_captions_val = open_data_file('merged_val')
