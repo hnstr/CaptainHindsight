@@ -10,7 +10,7 @@ from CH_model import get_LSTM_model
 from CH_mappings import get_word_int_mappings
 import CH_predict
 
-training_mode = 1
+init_training = 1
 filename_weights_to_import = 'weights/?.hdf5'
 n_epochs = 100
 filename_to_train_on = 'merged_train'
@@ -50,18 +50,18 @@ def get_data_pairs(filename, word2int):
     return x_img, x_lang, y
 
 def train(model, x_img, x_lang, y):
-    if training_mode:
-    	# define the checkpoint
-    	filepath="weights/weights-improvement-{epoch:02d}-{loss:.4f}.hdf5"
-    	checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
-    	callbacks_list = [checkpoint]
 
-    	model.fit([x_img, x_lang], y, nb_epoch=1, batch_size=32, callbacks=callbacks_list)
+	filepath="weights/weights-improvement-{epoch:02d}-{loss:.4f}.hdf5"
+	checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
+	callbacks_list = [checkpoint]
 
-    else:
+    if not init_training:
         # load the network weights
         model.load_weights(filename_weights_to_import)
         model.compile(loss='categorical_crossentropy', optimizer='adam')
+
+	model.fit([x_img, x_lang], y, nb_epoch=1, batch_size=32, callbacks=callbacks_list)
+
 
 if __name__ == '__main__':
     # Get word-int mappings
