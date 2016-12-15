@@ -47,9 +47,9 @@ def get_LSTM_model(img_input_dim, vocabulary_size, init_training, filename_to_im
 
 	# TODO: How to choose optimizer
 	# TODO: Should we use metric=['accuracy']? and why?
-    if not init_training:
-        # load the network weights
-        model.load_weights(filename_weights_to_import)
-    model.compile(loss='categorical_crossentropy', optimizer='adam')
+	if not init_training:
+		# load the network weights
+		model.load_weights(filename_weights_to_import)
+	model.compile(loss='categorical_crossentropy', optimizer='adam')
 
 	return model
