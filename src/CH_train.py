@@ -50,15 +50,9 @@ def get_data_pairs(filename, word2int):
     return x_img, x_lang, y
 
 def train(model, x_img, x_lang, y):
-
 	filepath="weights/weights-improvement-{epoch:02d}-{loss:.4f}.hdf5"
 	checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 	callbacks_list = [checkpoint]
-
-    if not init_training:
-        # load the network weights
-        model.load_weights(filename_weights_to_import)
-        model.compile(loss='categorical_crossentropy', optimizer='adam')
 
 	model.fit([x_img, x_lang], y, nb_epoch=1, batch_size=32, callbacks=callbacks_list)
 
@@ -68,7 +62,7 @@ if __name__ == '__main__':
     word2int, int2word = get_word_int_mappings(filename_to_train_on)
 
     # Build model
-    model = get_LSTM_model(4096, len(word2int))
+    model = get_LSTM_model(4096, len(word2int), init_training, filename_weights_to_import)
 
     if not os.path.isfile('../../Data/' + filename_to_train_on + str(n_files_trainingset_is_splitted_in - 1) + '.npy') or \
            os.path.isfile('../../Data/' + filename_to_train_on + str(n_files_trainingset_is_splitted_in) + '.npy'):
