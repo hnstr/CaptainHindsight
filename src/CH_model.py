@@ -13,8 +13,8 @@ t = [0, 34, 543, 76, 999]
 
 def get_LSTM_model(img_input_dim, vocabulary_size, init_training, filename_to_import):
 	# TODO: Dont know whether this is big enough
-	word_img_embedding_size = 128
-	hidden_neurons_LSTM = 256
+	word_img_embedding_size = 256
+	hidden_neurons_LSTM = 128
 	# Use dropout to reduce overfitting.
 	dropout = 0.2
 
