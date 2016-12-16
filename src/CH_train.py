@@ -39,7 +39,7 @@ def get_data_pairs(filename, word2int):
 				cap_to_int = [word2int[word] for word in full_caption[:word_counter+1]]
 
 				x_img.append(image_features[image_counter])
-				x_lang.append(np.array(cap_to_int[:-1]) / float(len(word2int)))
+				x_lang.append(np.array(cap_to_int[:-1], dtype=float) / float(len(word2int)))
 				t.append(cap_to_int[-1])
 
 
