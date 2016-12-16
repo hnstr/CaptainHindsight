@@ -9,28 +9,25 @@ def predict_caption(model, image_feature, word2int, int2word):
     end_of_sentence = False
     sentence_length = 0
 
-    predicted_sentence = []
-
+    predicted_sentence = [word2int['<s>']]
 
     while not end_of_sentence:
-        prediction = model.predict([image_feature, previous_token], batch_size=32, verbose=1)
+        prediction = model.predict([image_feature, previous_token], batch_size=32, verbose=0)
 
+        # pick most likely word to occur
         encoded_word = np.argmax(prediction)
+        predicted_sentence.append(encoded_word)
 
-        # Naive sampling of sentence
+        # naive sampling of sentence
         if (encoded_word == word2int['</s>']):
             end_of_sentence = True
-            print('End of sentence marker encountered')
+            # print('End of sentence marker encountered')
         elif (sentence_length > 60):
             end_of_sentence = True
-            print('Max sentence length reached')
+            # print('Max sentence length reached')
         else:
+            predicted_token = np.ones((np.size(image_feature), 1)) * encoded_word
+            previous_token = np.hstack((previous_token, predicted_token))
             sentence_length += 1
-            # print(encoded_word)
-            print(int2word[encoded_word])
-            previous_token = np.ones((np.size(image_feature), 1)) * encoded_word
-            predicted_sentence.append(encoded_word)
-
-    # predictions.append(prediction)
 
     return predicted_sentence

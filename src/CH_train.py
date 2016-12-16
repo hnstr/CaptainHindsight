@@ -85,3 +85,46 @@ if __name__ == '__main__':
 	# Predict new outputs
 	# image_features_val, image_captions_val = open_data_file('merged_val')
 	# predictions = predict_caption(model, image_features_val)
+
+
+ #    image_features_val, image_captions_val = open_data_file('merged_val')
+
+	# # predict captions for all image features
+	# all_captions = []
+
+	# print('Start prediction...')
+	# for i in range(20):  # set this one to how many captions you want to predict
+	# 	prediction = predict_caption(model, image_features_val[[i], :], word2int, int2word)
+	# 	all_captions.append(prediction)
+
+	# BLEUs = []
+	# for i in range(len(all_captions)):
+
+	# 	# print predicted caption
+	# 	sentence = []
+	# 	print('Caption #{} prediction:\t'.format(i))
+
+	# 	for word in all_captions[i]:
+	# 		sentence.append(int2word[word])
+	# 		print(int2word[word])
+
+	# 	print('')
+
+	# 	# print reference captions and calculate BLEU score
+	# 	for possible_caption in image_captions_val[i][1]:
+
+	# 		# bigram BLEU scoring
+	# 		BLEUscores = []
+	# 		BLEUscore = nltk.translate.bleu_score.sentence_bleu([possible_caption], sentence, weights=(0.5, 0.5))
+	# 		BLEUscores.append(BLEUscore)
+
+	# 		# for word in possible_caption:
+	# 		#	 print(word, sep='', end=' ', flush=True)
+	# 		# print('')
+
+	# 	# compute average BLEU score over the five reference captions
+	# 	BLEU_avg = np.mean(BLEUscores)
+	# 	BLEUs.append(BLEU_avg)
+	# 	# print(BLEU_avg)
+
+	# print(np.mean(BLEUs))
