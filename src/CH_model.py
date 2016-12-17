@@ -11,7 +11,7 @@ x = [[0.21, ..., 0.03], 0, 34, 543, 76]
 t = [0, 34, 543, 76, 999]
 """
 
-def get_LSTM_model(img_input_dim, vocabulary_size, init_training, filename_to_import):
+def get_LSTM_model(img_input_dim, vocabulary_size, init_training, filename_weights_to_import):
 	# TODO: Dont know whether this is big enough
 	word_img_embedding_size = 256
 	hidden_neurons_LSTM = 128

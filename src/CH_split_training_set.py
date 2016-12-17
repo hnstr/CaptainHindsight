@@ -14,7 +14,7 @@ def open_data_file(filename):
 if __name__ == '__main__':
 	image_features, image_captions = open_data_file(filename)
 
-	chunck_size = 200
+	chunck_size = 150
 	image_features_chunks = [image_features[x:x+chunck_size] for x in range(0, len(image_features), chunck_size)]
 	image_captions_chunks = [image_captions[x:x+chunck_size] for x in range(0, len(image_captions), chunck_size)]
 

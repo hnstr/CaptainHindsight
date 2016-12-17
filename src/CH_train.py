@@ -14,7 +14,7 @@ init_training = 1
 filename_weights_to_import = 'weights/?.hdf5'
 n_epochs = 100
 filename_to_train_on = 'merged_train'
-n_files_trainingset_is_splitted_in = 716
+n_files_trainingset_is_splitted_in = 955
 
 def open_data_file(filename):
 	path = '../../Data/'
@@ -71,7 +71,7 @@ if __name__ == '__main__':
 		for n in np.random.permutation(n_files_trainingset_is_splitted_in):
 			gc.collect()
 
-			full_filename_to_train_on = filename_to_train_on += str(n)
+			full_filename_to_train_on = filename_to_train_on + str(n)
 
 			# Convert to approriate input-output pairs
 			x_img, x_lang, y = get_data_pairs(full_filename_to_train_on, word2int)
