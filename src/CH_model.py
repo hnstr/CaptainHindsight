@@ -13,22 +13,22 @@ t = [0, 34, 543, 76, 999]
 
 def get_LSTM_model(img_input_dim, vocabulary_size, init_training, filename_weights_to_import):
 	# TODO: Dont know whether this is big enough
-	word_img_embedding_size = 256
-	hidden_neurons_LSTM = 128
+	word_img_embedding_size = 512
+	hidden_neurons_LSTM = 512
 	# Use dropout to reduce overfitting.
 	dropout = 0.2
 
 	image_model = Sequential()
 	# One layer 'embedding' from image features to shared img-word space
 	image_model.add(Dense(word_img_embedding_size, input_dim=img_input_dim))
-	image_model.add(Dropout(dropout))
+	# image_model.add(Dropout(dropout))
 	# Reshape so that we can concatenate word embeddings
 	image_model.add(RepeatVector(1))
 
 	lang_model = Sequential()
 	# One layer embedding from word to shared img-word space
 	lang_model.add(Embedding(vocabulary_size, word_img_embedding_size))
-	lang_model.add(Dropout(dropout))
+	# lang_model.add(Dropout(dropout))
 
 	model = Sequential()
 	# Merge image and language model so that we can provide input of the form
@@ -39,7 +39,7 @@ def get_LSTM_model(img_input_dim, vocabulary_size, init_training, filename_weigh
 	# TODO: Might get performance improvement from using unroll=True, but need to specify time dimension
 	# We could search for the max caption length in training set (+5%) (+3 for I, START and STOP).
 	model.add(LSTM(hidden_neurons_LSTM))
-	model.add(Dropout(dropout))
+	# model.add(Dropout(dropout))
 	model.add(Dense(vocabulary_size))
 	model.add(Activation('softmax'))
 
