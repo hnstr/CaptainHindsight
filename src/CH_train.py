@@ -9,9 +9,10 @@ from keras.preprocessing.sequence import pad_sequences
 from CH_model import get_LSTM_model
 from CH_mappings import get_word_int_mappings
 from CH_predict import predict_caption
+import nltk
 
-init_training = 1
-filename_weights_to_import = 'weights/?.hdf5'
+init_training = 0
+filename_weights_to_import = 'weights/weights-improvement-00-2.9789.hdf5'
 n_epochs = 100
 filename_to_train_on = 'merged_train'
 n_files_trainingset_is_splitted_in = 955
@@ -65,7 +66,7 @@ if __name__ == '__main__':
 
 	if not os.path.isfile('../../Data/' + filename_to_train_on + str(n_files_trainingset_is_splitted_in - 1) + '.npy') or \
 		   os.path.isfile('../../Data/' + filename_to_train_on + str(n_files_trainingset_is_splitted_in) + '.npy'):
-		print "Something went wrong!!"
+		print("Something went wrong!!")
 
 	for epoch in range(n_epochs):
 		for n in np.random.permutation(n_files_trainingset_is_splitted_in):
@@ -99,29 +100,29 @@ if __name__ == '__main__':
 
 		# print predicted caption
 		sentence = []
-		print('Caption #{} prediction:\t'.format(i))
+		print('Caption #{} prediction:\t'.format(i), sep=' ', end=' ', flush=True)
 
 		for word in all_captions[i]:
 			sentence.append(int2word[word])
-			print(int2word[word])
+			print(int2word[word], sep=' ', end=' ', flush=True)
 
 		print('')
 
-		# # print reference captions and calculate BLEU score
-		# for possible_caption in image_captions_val[i][1]:
+		# print reference captions and calculate BLEU score
+		for possible_caption in image_captions_val[i][1]:
 
-		# 	# bigram BLEU scoring
-		# 	BLEUscores = []
-		# 	BLEUscore = nltk.translate.bleu_score.sentence_bleu([possible_caption], sentence, weights=(0.5, 0.5))
-		# 	BLEUscores.append(BLEUscore)
+			# bigram BLEU scoring
+			BLEUscores = []
+			BLEUscore = nltk.translate.bleu_score.sentence_bleu([possible_caption], sentence, weights=(0.5, 0.5))
+			BLEUscores.append(BLEUscore)
 
-		# 	# for word in possible_caption:
-		# 	#	 print(word, sep='', end=' ', flush=True)
-		# 	# print('')
+			# for word in possible_caption:
+			#	 print(word, sep='', end=' ', flush=True)
+			# print('')
 
-		# # compute average BLEU score over the five reference captions
-		# BLEU_avg = np.mean(BLEUscores)
-		# BLEUs.append(BLEU_avg)
-		# # print(BLEU_avg)
+		# compute average BLEU score over the five reference captions
+		BLEU_avg = np.mean(BLEUscores)
+		BLEUs.append(BLEU_avg)
+		# print(BLEU_avg)
 
 	print(np.mean(BLEUs))
